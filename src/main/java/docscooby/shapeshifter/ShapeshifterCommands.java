@@ -23,7 +23,6 @@ public class ShapeshifterCommands {
 
         ShapeshifterData data = (ShapeshifterData) player;
         data.setShapeshifter(true);
-
         return 1;
     }
 }
