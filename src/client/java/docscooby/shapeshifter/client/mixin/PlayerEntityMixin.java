@@ -12,12 +12,12 @@ public class PlayerEntityMixin implements ShapeshifterData {
     private boolean shapeshifter = false;
 
     @Override
-    public boolean isShapeshifter() {
+    public boolean shapeshifter$isShapeshifter() {
         return shapeshifter;
     }
 
     @Override
-    public void setShapeshifter(boolean value) {
+    public void shapeshifter$setShapeshifter(boolean value) {
         shapeshifter = value;
     }
 }

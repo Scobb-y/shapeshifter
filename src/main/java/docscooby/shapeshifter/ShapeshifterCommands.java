@@ -22,7 +22,10 @@ public class ShapeshifterCommands {
         }
 
         ShapeshifterData data = (ShapeshifterData) player;
-        data.setShapeshifter(true);
+        data.shapeshifter$setShapeshifter(true);
+        player.sendSystemMessage(
+                Component.literal("Player set to Shapeshifter")
+        );
         return 1;
     }
 }

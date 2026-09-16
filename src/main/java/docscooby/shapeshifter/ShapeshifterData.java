@@ -1,6 +1,6 @@
 package docscooby.shapeshifter;
 
 public interface ShapeshifterData {
-    boolean isShapeshifter();
-    void setShapeshifter(boolean value);
+    boolean shapeshifter$isShapeshifter();
+    void shapeshifter$setShapeshifter(boolean value);
 }

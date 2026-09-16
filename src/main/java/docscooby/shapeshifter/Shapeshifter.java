@@ -1,6 +1,7 @@
 package docscooby.shapeshifter;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import docscooby.shapeshifter.events.ShapeshifterAttackEvent;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -27,6 +28,7 @@ public class Shapeshifter implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
+        ShapeshifterAttackEvent.register();
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(Commands.literal("ss")
