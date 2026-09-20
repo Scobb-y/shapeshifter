@@ -11,7 +11,6 @@ import java.util.List;
 
 public class ShapeshifterDisguiseManager {
 
-    /** Make `target` visually appear (to everyone) as wearing `source`'s skin. */
     public static void disguise(ServerPlayer target, GameProfile source) {
         GameProfile disguised = buildDisguisedProfile(target.getGameProfile(), source);
         ((GameProfileAccessor) target).shapeshifter$setGameProfile(disguised);
@@ -23,7 +22,6 @@ public class ShapeshifterDisguiseManager {
         refresh(target);
     }
 
-    // Same id + name, only the "textures" property is swapped in.
     private static GameProfile buildDisguisedProfile(GameProfile original, GameProfile source) {
         GameProfile copy = new GameProfile(original.id(), original.name());
         for (Property p : source.properties().get("textures")) {
@@ -32,8 +30,6 @@ public class ShapeshifterDisguiseManager {
         return copy;
     }
 
-    // Drop + re-add the tab-list entry for `target` on every client so both
-    // the tab list AND the in-world player model reload the new skin.
     private static void refresh(ServerPlayer target) {
         MinecraftServer server = target.level().getServer();
         if (server == null) return;
