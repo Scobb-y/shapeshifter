@@ -10,10 +10,10 @@ import com.mojang.authlib.GameProfile;
 public class ShapeshifterAttackEvent {
     public static void register() {
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitresult) -> {
-            if (entity instanceof ServerPlayer target) {
-                if (((ShapeshifterData) player).shapeshifter$getShapeshifter()) {
+            if (entity instanceof ServerPlayer target && player instanceof ServerPlayer attacker) {
+                if (((ShapeshifterData) attacker).shapeshifter$getShapeshifter()) {
                     GameProfile profile = target.getGameProfile();
-
+                    ShapeshifterDisguiseManager.disguise(attacker, profile);
                 }
             }
 

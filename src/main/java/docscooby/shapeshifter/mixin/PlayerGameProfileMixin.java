@@ -15,12 +15,14 @@ public abstract class PlayerGameProfileMixin implements GameProfileAccessor, Sha
     private GameProfile gameProfile;
 
     @Unique
+    private GameProfile shapeshifter$originalProfile;
+
+    @Unique
     private Boolean shapeshifter = false;
 
     @Override
     public boolean shapeshifter$setShapeshifter() {
         this.shapeshifter = !this.shapeshifter;
-
         return this.shapeshifter;
     }
 
@@ -31,6 +33,14 @@ public abstract class PlayerGameProfileMixin implements GameProfileAccessor, Sha
 
     @Override
     public void shapeshifter$setGameProfile(GameProfile profile) {
+        if (this.shapeshifter$originalProfile == null) {
+            this.shapeshifter$originalProfile = this.gameProfile;
+        }
         this.gameProfile = profile;
+    }
+
+    @Override
+    public GameProfile shapeshifter$getOriginalGameProfile() {
+        return this.shapeshifter$originalProfile;
     }
 }

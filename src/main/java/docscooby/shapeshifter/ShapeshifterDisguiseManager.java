@@ -1,10 +1,14 @@
 package docscooby.shapeshifter;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
+import com.mojang.authlib.properties.PropertyMap;
+import net.minecraft.network.protocol.game.*;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
@@ -17,31 +21,49 @@ public class ShapeshifterDisguiseManager {
         refresh(target);
     }
 
-    public static void clearDisguise(ServerPlayer target, GameProfile originalProfile) {
-        ((GameProfileAccessor) target).shapeshifter$setGameProfile(originalProfile);
+    /** Restores whatever profile the target had before it was first disguised. */
+    public static void clearDisguise(ServerPlayer target) {
+        GameProfileAccessor accessor = (GameProfileAccessor) target;
+        GameProfile original = accessor.shapeshifter$getOriginalGameProfile();
+        if (original == null) return; // never disguised, nothing to do
+
+        accessor.shapeshifter$setGameProfile(original);
         refresh(target);
     }
 
     private static GameProfile buildDisguisedProfile(GameProfile original, GameProfile source) {
-        GameProfile copy = new GameProfile(original.id(), original.name());
-        for (Property p : source.properties().get("textures")) {
-            copy.properties().put("textures", p);
-        }
-        return copy;
+        Multimap<String, Property> backing = ArrayListMultimap.create();
+        backing.putAll("textures", source.properties().get("textures"));
+
+        System.out.println("[Shapeshifter] copying " + backing.get("textures").size() + " textures from " + source.name());
+
+        PropertyMap properties = new PropertyMap(backing);
+        return new GameProfile(original.id(), original.name(), properties);
     }
 
     private static void refresh(ServerPlayer target) {
-        MinecraftServer server = target.level().getServer();
-        if (server == null) return;
+        if (!(target.level() instanceof ServerLevel serverLevel)) return;
+        MinecraftServer server = serverLevel.getServer();
 
-        ClientboundPlayerInfoRemovePacket remove =
+        ClientboundPlayerInfoRemovePacket removeInfo =
                 new ClientboundPlayerInfoRemovePacket(List.of(target.getUUID()));
-        ClientboundPlayerInfoUpdatePacket add =
+        ClientboundPlayerInfoUpdatePacket addInfo =
                 ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(List.of(target));
 
+        List<SynchedEntityData.DataValue<?>> entityData = target.getEntityData().getNonDefaultValues();
+
         for (ServerPlayer viewer : server.getPlayerList().getPlayers()) {
-            viewer.connection.send(remove);
-            viewer.connection.send(add);
+            viewer.connection.send(removeInfo);
+            viewer.connection.send(addInfo);
+
+            if (viewer != target) {
+                viewer.connection.send(new ClientboundRemoveEntitiesPacket(target.getId()));
+                viewer.connection.send(new ClientboundAddEntityPacket(target, 0, target.blockPosition()));
+
+                if (entityData != null) {
+                    viewer.connection.send(new ClientboundSetEntityDataPacket(target.getId(), entityData));
+                }
+            }
         }
     }
 }
