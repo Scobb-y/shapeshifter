@@ -1,19 +1,23 @@
 package docscooby.shapeshifter;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import docscooby.shapeshifter.events.ShapeshifterAttackEvent;
+import docscooby.shapeshifter.network.ProfilesListPayload;
+import docscooby.shapeshifter.network.RequestProfilesPayload;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
-import net.minecraft.server.permissions.Permissions;
+import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import docscooby.shapeshifter.ShapeshifterCommands;
+import java.util.List;
 
 public class Shapeshifter implements ModInitializer {
 	public static final String MOD_ID = "shapeshifter";
@@ -29,6 +33,20 @@ public class Shapeshifter implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
         ShapeshifterAttackEvent.register();
+
+        PayloadTypeRegistry.serverboundPlay().register(RequestProfilesPayload.TYPE, RequestProfilesPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ProfilesListPayload.TYPE, ProfilesListPayload.CODEC);
+
+        ServerPlayNetworking.registerGlobalReceiver(RequestProfilesPayload.TYPE, (payload, context) -> {
+            ServerPlayer player = context.player();
+            ShapeshifterData data = (ShapeshifterData) player;
+
+            List<String> names = data.shapeshifter$getShapeshifter()
+                    ? data.shapeshifter$getProfiles().stream().map(GameProfile::name).toList()
+                    : List.of();
+
+            ServerPlayNetworking.send(player, new ProfilesListPayload(names));
+        });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(Commands.literal("ss")

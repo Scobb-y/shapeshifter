@@ -1,7 +1,6 @@
 package docscooby.shapeshifter.events;
 
 import docscooby.shapeshifter.ShapeshifterData;
-import docscooby.shapeshifter.ShapeshifterDisguiseManager;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -13,7 +12,7 @@ public class ShapeshifterAttackEvent {
             if (entity instanceof ServerPlayer target && player instanceof ServerPlayer attacker) {
                 if (((ShapeshifterData) attacker).shapeshifter$getShapeshifter()) {
                     GameProfile profile = target.getGameProfile();
-                    ShapeshifterDisguiseManager.disguise(attacker, profile);
+                    ((ShapeshifterData) attacker).shapeshifter$addProfile(profile);
                 }
             }
 

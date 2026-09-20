@@ -6,6 +6,9 @@ import docscooby.shapeshifter.ShapeshifterData;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Mixin(Player.class)
 public abstract class PlayerGameProfileMixin implements GameProfileAccessor, ShapeshifterData {
 
@@ -13,6 +16,9 @@ public abstract class PlayerGameProfileMixin implements GameProfileAccessor, Sha
     @Shadow
     @Final
     private GameProfile gameProfile;
+
+    @Unique
+    private ArrayList<GameProfile> shapeshifter$shapeshifterProfiles = new ArrayList<>();
 
     @Unique
     private GameProfile shapeshifter$originalProfile;
@@ -42,5 +48,23 @@ public abstract class PlayerGameProfileMixin implements GameProfileAccessor, Sha
     @Override
     public GameProfile shapeshifter$getOriginalGameProfile() {
         return this.shapeshifter$originalProfile;
+    }
+
+    @Override
+    public void shapeshifter$addProfile(GameProfile profile) {
+        if (this.shapeshifter$shapeshifterProfiles == null) {
+            this.shapeshifter$shapeshifterProfiles = new ArrayList<>();
+        }
+        if (!this.shapeshifter$shapeshifterProfiles.contains(profile)) {
+            this.shapeshifter$shapeshifterProfiles.add(profile);
+        }
+    }
+
+    @Override
+    public List<GameProfile> shapeshifter$getProfiles() {
+        if (this.shapeshifter$shapeshifterProfiles == null) {
+            this.shapeshifter$shapeshifterProfiles = new ArrayList<>();
+        }
+        return this.shapeshifter$shapeshifterProfiles;
     }
 }

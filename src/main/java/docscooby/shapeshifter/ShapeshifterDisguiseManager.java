@@ -42,7 +42,7 @@ public class ShapeshifterDisguiseManager {
     }
 
     private static void refresh(ServerPlayer target) {
-        if (!(target.level() instanceof ServerLevel serverLevel)) return;
+        ServerLevel serverLevel = target.level();
         MinecraftServer server = serverLevel.getServer();
 
         ClientboundPlayerInfoRemovePacket removeInfo =
