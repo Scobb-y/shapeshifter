@@ -22,10 +22,19 @@ public class ShapeshifterCommands {
         }
 
         ShapeshifterData data = (ShapeshifterData) player;
-        data.shapeshifter$setShapeshifter(true);
-        player.sendSystemMessage(
-                Component.literal("Player set to Shapeshifter")
-        );
-        return 1;
+        boolean result = data.shapeshifter$setShapeshifter();
+
+        if (result) {
+            player.sendSystemMessage(
+                    Component.literal("Player set to Shapeshifter")
+            );
+            return 1;
+
+        } else {
+            player.sendSystemMessage(
+                    Component.literal("Player set to not Shapeshifter")
+            );
+            return 0;
+        }
     }
 }
