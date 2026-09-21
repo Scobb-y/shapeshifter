@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import docscooby.shapeshifter.events.ShapeshifterAttackEvent;
 import docscooby.shapeshifter.network.ProfilesListPayload;
 import docscooby.shapeshifter.network.RequestProfilesPayload;
+import docscooby.shapeshifter.network.SelectProfilePayload;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -36,6 +37,7 @@ public class Shapeshifter implements ModInitializer {
 
         PayloadTypeRegistry.serverboundPlay().register(RequestProfilesPayload.TYPE, RequestProfilesPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ProfilesListPayload.TYPE, ProfilesListPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(SelectProfilePayload.TYPE, SelectProfilePayload.CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(RequestProfilesPayload.TYPE, (payload, context) -> {
             ServerPlayer player = context.player();
@@ -46,6 +48,16 @@ public class Shapeshifter implements ModInitializer {
                     : List.of();
 
             ServerPlayNetworking.send(player, new ProfilesListPayload(names));
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(SelectProfilePayload.TYPE, (payload, context) -> {
+            ServerPlayer player = context.player();
+            ShapeshifterData data = (ShapeshifterData) player;
+
+            data.shapeshifter$getProfiles().stream()
+                    .filter(profile -> profile.name().equals(payload.name()))
+                    .findFirst()
+                    .ifPresent(profile -> ShapeshifterDisguiseManager.disguise(player, profile));
         });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
