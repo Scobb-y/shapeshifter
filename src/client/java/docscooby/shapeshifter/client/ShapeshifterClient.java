@@ -1,6 +1,7 @@
 package docscooby.shapeshifter.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import docscooby.shapeshifter.network.ApplyRagePayload;
 import docscooby.shapeshifter.network.RequestProfilesPayload;
 import docscooby.shapeshifter.network.ProfilesListPayload;
 import net.fabricmc.api.ClientModInitializer;
@@ -47,6 +48,12 @@ public class ShapeshifterClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (toggleList.consumeClick()) {
                 ClientPlayNetworking.send(new RequestProfilesPayload());
+            }
+        });
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (rage.consumeClick()) {
+                ClientPlayNetworking.send(new ApplyRagePayload());
             }
         });
 

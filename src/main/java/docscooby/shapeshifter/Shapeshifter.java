@@ -3,6 +3,7 @@ package docscooby.shapeshifter;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import docscooby.shapeshifter.events.ShapeshifterAttackEvent;
+import docscooby.shapeshifter.network.ApplyRagePayload;
 import docscooby.shapeshifter.network.ProfilesListPayload;
 import docscooby.shapeshifter.network.RequestProfilesPayload;
 import docscooby.shapeshifter.network.SelectProfilePayload;
@@ -15,6 +16,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.resources.Identifier;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +41,7 @@ public class Shapeshifter implements ModInitializer {
         PayloadTypeRegistry.serverboundPlay().register(RequestProfilesPayload.TYPE, RequestProfilesPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ProfilesListPayload.TYPE, ProfilesListPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(SelectProfilePayload.TYPE, SelectProfilePayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(ApplyRagePayload.TYPE, ApplyRagePayload.CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(RequestProfilesPayload.TYPE, (payload, context) -> {
             ServerPlayer player = context.player();
@@ -58,6 +62,13 @@ public class Shapeshifter implements ModInitializer {
                     .filter(profile -> profile.name().equals(payload.name()))
                     .findFirst()
                     .ifPresent(profile -> ShapeshifterDisguiseManager.disguise(player, profile));
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(ApplyRagePayload.TYPE, (payload, context) -> {
+            ServerPlayer player = context.player();
+            player.addEffect(new MobEffectInstance(MobEffects.SPEED, 20 * 90, 0));
+            player.addEffect(new MobEffectInstance(MobEffects.STRENGTH, 20 * 90, 0));
+            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 30, 1));
         });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
