@@ -3,6 +3,7 @@ package docscooby.shapeshifter;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import docscooby.shapeshifter.events.ShapeshifterAttackEvent;
+import docscooby.shapeshifter.mixin.PlayerGameProfileMixin;
 import docscooby.shapeshifter.network.ApplyRagePayload;
 import docscooby.shapeshifter.network.ProfilesListPayload;
 import docscooby.shapeshifter.network.RequestProfilesPayload;
@@ -21,6 +22,7 @@ import net.minecraft.world.effect.MobEffects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.util.List;
 
 public class Shapeshifter implements ModInitializer {
@@ -47,6 +49,8 @@ public class Shapeshifter implements ModInitializer {
             ServerPlayer player = context.player();
             ShapeshifterData data = (ShapeshifterData) player;
 
+            if (!data.shapeshifter$getShapeshifter()) return;
+
             List<String> names = data.shapeshifter$getShapeshifter()
                     ? data.shapeshifter$getProfiles().stream().map(GameProfile::name).toList()
                     : List.of();
@@ -66,6 +70,10 @@ public class Shapeshifter implements ModInitializer {
 
         ServerPlayNetworking.registerGlobalReceiver(ApplyRagePayload.TYPE, (payload, context) -> {
             ServerPlayer player = context.player();
+            ShapeshifterData data = (ShapeshifterData) player;
+
+            if (!data.shapeshifter$getShapeshifter()) return;
+
             player.addEffect(new MobEffectInstance(MobEffects.SPEED, 20 * 90, 0));
             player.addEffect(new MobEffectInstance(MobEffects.STRENGTH, 20 * 90, 0));
             player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 30, 1));
