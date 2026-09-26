@@ -1,10 +1,12 @@
 package docscooby.shapeshifter.client;
 
-import docscooby.shapeshifter.network.SelectProfilePayload;
+import docscooby.shapeshifter.Shapeshifter;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -24,7 +26,9 @@ public class ShapeshifterListScreen extends Screen {
         int y = 40;
         for (String name : names) {
             addRenderableWidget(Button.builder(Component.literal(name), button -> {
-                        ClientPlayNetworking.send(new SelectProfilePayload(name));
+                        FriendlyByteBuf buf = PacketByteBufs.create();
+                        buf.writeUtf(name);
+                        ClientPlayNetworking.send(Shapeshifter.SELECT_PROFILE, buf);
                         this.onClose();
                     })
                     .bounds(this.width / 2 - 100, y, 200, 20)
@@ -38,12 +42,12 @@ public class ShapeshifterListScreen extends Screen {
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-        graphics.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        super.render(graphics, mouseX, mouseY, partialTick);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
 
         if (names.isEmpty()) {
-            graphics.centeredText(this.font, Component.literal("No stolen skins yet."), this.width / 2, 50, 0xFFAAAAAA);
+            graphics.drawCenteredString(this.font, Component.literal("No stolen skins yet."), this.width / 2, 50, 0xFFAAAAAA);
         }
     }
 
