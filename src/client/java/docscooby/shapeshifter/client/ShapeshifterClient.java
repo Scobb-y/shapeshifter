@@ -19,6 +19,7 @@ public class ShapeshifterClient implements ClientModInitializer {
 
     private static KeyMapping toggleList;
     private static KeyMapping rage;
+    private static KeyMapping hunt;
 
     @Override
     public void onInitializeClient() {
@@ -32,6 +33,11 @@ public class ShapeshifterClient implements ClientModInitializer {
                 GLFW.GLFW_KEY_R, "key.categories.shapeshifter"
         ));
 
+        hunt = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.shapeshifter.hunt", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_Z, "key.categories.shapeshifter"
+        ));
+
         ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.PROFILES_LIST, (client, handler, buf, responseSender) -> {
             List<String> names = buf.readList(FriendlyByteBuf::readUtf);
             client.execute(() -> client.setScreen(new ShapeshifterListScreen(names)));
@@ -43,6 +49,9 @@ public class ShapeshifterClient implements ClientModInitializer {
             }
             if (rage.consumeClick()) {
                 ClientPlayNetworking.send(Shapeshifter.APPLY_RAGE, PacketByteBufs.empty());
+            }
+            if (hunt.consumeClick()) {
+                ClientPlayNetworking.send(Shapeshifter.HUNT, PacketByteBufs.empty());
             }
         });
 

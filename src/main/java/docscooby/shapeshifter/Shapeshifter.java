@@ -1,7 +1,6 @@
 package docscooby.shapeshifter;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import docscooby.shapeshifter.events.ShapeshifterAttackEvent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -11,12 +10,15 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
+import static docscooby.shapeshifter.ShapeshifterDisguiseManager.sendScopedGlow;
 
 public class Shapeshifter implements ModInitializer {
     public static final String MOD_ID = "shapeshifter";
@@ -27,6 +29,7 @@ public class Shapeshifter implements ModInitializer {
     public static final ResourceLocation PROFILES_LIST = id("profiles_list");
     public static final ResourceLocation SELECT_PROFILE = id("select_profile");
     public static final ResourceLocation APPLY_RAGE = id("apply_rage");
+    public static final ResourceLocation HUNT = id("hunt");
 
     @Override
     public void onInitialize() {
@@ -65,6 +68,19 @@ public class Shapeshifter implements ModInitializer {
                 player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 20 * 30, 0));
                 player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20 * 30, 0));
                 player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 10, 1));
+            });
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(HUNT, (server, player, handler, buf, responseSender) -> {
+            server.execute(() -> {
+                ShapeshifterData data = (ShapeshifterData) player;
+                if (!data.shapeshifter$getShapeshifter()) return;
+
+                for (ServerPlayer nearby : server.getPlayerList().getPlayers()) {
+                    if (nearby != player && player.distanceTo(nearby) < 50) {
+                        sendScopedGlow(server, player, nearby);
+                    }
+                }
             });
         });
 
