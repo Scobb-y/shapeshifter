@@ -3,6 +3,7 @@
   "package": "docscooby.shapeshifter.client.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "AbstractClientPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

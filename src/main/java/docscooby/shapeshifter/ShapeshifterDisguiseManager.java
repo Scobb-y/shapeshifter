@@ -2,6 +2,9 @@ package docscooby.shapeshifter;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.MinecraftServer;
@@ -16,6 +19,7 @@ public class ShapeshifterDisguiseManager {
         GameProfile disguised = buildDisguisedProfile(target.getGameProfile(), source);
         ((GameProfileAccessor) target).shapeshifter$setGameProfile(disguised);
         refresh(target);
+        sendSelfSkinUpdate(target, source);
     }
 
     public static void clearDisguise(ServerPlayer target) {
@@ -25,6 +29,7 @@ public class ShapeshifterDisguiseManager {
 
         accessor.shapeshifter$setGameProfile(original);
         refresh(target);
+        sendSelfSkinUpdate(target, original);
     }
 
     private static GameProfile buildDisguisedProfile(GameProfile original, GameProfile source) {
@@ -59,5 +64,18 @@ public class ShapeshifterDisguiseManager {
                 }
             }
         }
+    }
+
+    private static void sendSelfSkinUpdate(ServerPlayer target, GameProfile source) {
+        Property texture = source.getProperties().get("textures").stream().findFirst().orElse(null);
+        if (texture == null) return;
+
+        FriendlyByteBuf buf = PacketByteBufs.create();
+        buf.writeUtf(texture.getValue());
+        boolean hasSignature = texture.hasSignature();
+        buf.writeBoolean(hasSignature);
+        if (hasSignature) buf.writeUtf(texture.getSignature());
+
+        ServerPlayNetworking.send(target, Shapeshifter.SELF_SKIN_UPDATE, buf);
     }
 }

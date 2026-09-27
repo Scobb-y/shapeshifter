@@ -22,6 +22,7 @@ public class Shapeshifter implements ModInitializer {
     public static final String MOD_ID = "shapeshifter";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+    public static final ResourceLocation SELF_SKIN_UPDATE = id("self_skin_update");
     public static final ResourceLocation REQUEST_PROFILES = id("request_profiles");
     public static final ResourceLocation PROFILES_LIST = id("profiles_list");
     public static final ResourceLocation SELECT_PROFILE = id("select_profile");
@@ -61,9 +62,9 @@ public class Shapeshifter implements ModInitializer {
                 ShapeshifterData data = (ShapeshifterData) player;
                 if (!data.shapeshifter$getShapeshifter()) return;
 
-                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 20 * 90, 0));
-                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20 * 90, 0));
-                player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 30, 1));
+                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 20 * 30, 0));
+                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20 * 30, 0));
+                player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 10, 1));
             });
         });
 

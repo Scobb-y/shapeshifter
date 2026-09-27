@@ -1,8 +1,9 @@
 package docscooby.shapeshifter.client;
 
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import com.mojang.blaze3d.platform.InputConstants;
 import docscooby.shapeshifter.Shapeshifter;
-import docscooby.shapeshifter.ShapeshifterData;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -43,6 +44,23 @@ public class ShapeshifterClient implements ClientModInitializer {
             if (rage.consumeClick()) {
                 ClientPlayNetworking.send(Shapeshifter.APPLY_RAGE, PacketByteBufs.empty());
             }
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.SELF_SKIN_UPDATE, (client, handler, buf, responseSender) -> {
+            String value = buf.readUtf();
+            boolean hasSignature = buf.readBoolean();
+            String signature = hasSignature ? buf.readUtf() : null;
+
+            client.execute(() -> {
+                if (client.player == null) return;
+
+                GameProfile profile = client.player.getGameProfile();
+                profile.getProperties().removeAll("textures");
+                profile.getProperties().put("textures", new Property("textures", value, signature));
+
+                client.getSkinManager().registerSkins(profile, (type, location, texture) -> {}, true);
+                ((PlayerInfoAccessor) client.player).shapeshifter$refreshPlayerInfo();
+            });
         });
     }
 }
