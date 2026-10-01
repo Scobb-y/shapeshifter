@@ -6,8 +6,18 @@ plugins {
 repositories {
     maven { url = uri('https://maven.covers1624.net/') }
     maven { url = uri("https://registry.somethingcatchy.net/repository/maven-public/") }
-}
+    maven { url = 'https://maven.maxhenkel.de/repository/public' }
 
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter { includeGroup "maven.modrinth" }
+    }
+}
 loom {
     splitEnvironmentSourceSets()
     mods {
@@ -28,10 +38,14 @@ loom {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings() // keeps Mojang's real class names, not Yarn's
+    mappings loom.officialMojangMappings()
 
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    implementation "de.maxhenkel.voicechat:voicechat-api:${voicechat_api_version}"
+
+    modRuntimeOnly "maven.modrinth:simple-voice-chat:fabric-1.20.1-2.6.22"
 
     localRuntime 'net.covers1624:DevLogin:0.1.0.5'
 }

@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 public class ShapeshifterDisguiseManager {
 
     private static final int FLAG_GLOWING = 6;
-    private static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
+    public static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(2);
 
     public static void disguise(ServerPlayer target, GameProfile source) {
         GameProfile disguised = buildDisguisedProfile(target.getGameProfile(), source);

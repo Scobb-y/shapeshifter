@@ -33,6 +33,14 @@ public class ShapeshifterListScreen extends Screen {
                     })
                     .bounds(this.width / 2 - 100, y, 200, 20)
                     .build());
+
+            addRenderableWidget(Button.builder(Component.literal("▶"), button -> {
+                        FriendlyByteBuf buf = PacketByteBufs.create();
+                        buf.writeUtf(name);
+                        ClientPlayNetworking.send(Shapeshifter.PLAY_RECORDING, buf);
+                    })
+                    .bounds(this.width / 2 + 105, y, 20, 20)
+                    .build());
             y += 24;
         }
 

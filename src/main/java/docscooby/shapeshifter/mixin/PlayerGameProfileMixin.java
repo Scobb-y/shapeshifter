@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Mixin(Player.class)
 public abstract class PlayerGameProfileMixin implements GameProfileAccessor, ShapeshifterData {
@@ -67,4 +68,13 @@ public abstract class PlayerGameProfileMixin implements GameProfileAccessor, Sha
         }
         return this.shapeshifter$shapeshifterProfiles;
     }
+
+    @Unique
+    private UUID shapeshifter$selectedTarget;
+
+    @Override
+    public void shapeshifter$setSelectedTarget(UUID uuid) { this.shapeshifter$selectedTarget = uuid; }
+
+    @Override
+    public UUID shapeshifter$getSelectedTarget() { return this.shapeshifter$selectedTarget; }
 }
