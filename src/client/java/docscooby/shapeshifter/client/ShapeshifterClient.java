@@ -47,7 +47,7 @@ public class ShapeshifterClient implements ClientModInitializer {
         ));
 
         hunt = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.shapeshifter.copy", InputConstants.Type.KEYSYM,
+                "key.shapeshifter.hunt", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_Z, "key.categories.shapeshifter"
         ));
 

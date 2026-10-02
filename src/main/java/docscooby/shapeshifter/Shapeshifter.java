@@ -129,6 +129,7 @@ public class Shapeshifter implements ModInitializer {
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(Commands.literal("ss")
+                    .requires(source -> source.hasPermission(2))
                     .then(Commands.argument("player", EntityArgument.player())
                             .executes(ShapeshifterCommands::assignShapeshift)));
         });

@@ -15,11 +15,11 @@ public class ShapeshifterCommands {
         boolean result = data.shapeshifter$setShapeshifter();
 
         if (result) {
-            player.sendSystemMessage(Component.literal("Player set to Shapeshifter"));
+            player.sendSystemMessage(Component.literal(player.getName().getString() + " set to Shapeshifter"));
             return 1;
         } else {
             ShapeshifterDisguiseManager.clearDisguise(player);
-            player.sendSystemMessage(Component.literal("Player set to not Shapeshifter"));
+            player.sendSystemMessage(Component.literal(player.getName().getString() + " set to not Shapeshifter"));
             return 0;
         }
     }
