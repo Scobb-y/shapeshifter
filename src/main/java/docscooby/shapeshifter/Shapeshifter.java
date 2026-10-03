@@ -12,7 +12,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import org.slf4j.Logger;
@@ -83,7 +82,7 @@ public class Shapeshifter implements ModInitializer {
                 if (!data.shapeshifter$getShapeshifter()) return;
 
                 for (ServerPlayer nearby : server.getPlayerList().getPlayers()) {
-                    if (nearby != player && player.distanceTo(nearby) < 50) {
+                    if (nearby != player && player.distanceTo(nearby) < 100) {
                         sendScopedGlow(server, player, nearby);
                     }
                 }
