@@ -7,6 +7,7 @@ import docscooby.shapeshifter.Shapeshifter;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.KeyMapping;
@@ -26,7 +27,7 @@ public class ShapeshifterClient implements ClientModInitializer {
 
     public static boolean targetModeActive = false;
     public static boolean isRecording = false;
-    public static boolean targeting = false;
+    public static boolean isShapeshifter = false;
     public static UUID highlightedTarget = null;
     public static UUID recordingTarget = null;
 
@@ -69,25 +70,35 @@ public class ShapeshifterClient implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (toggleList.consumeClick())  ClientPlayNetworking.send(Shapeshifter.REQUEST_PROFILES, PacketByteBufs.empty());
-            if (rage.consumeClick())        ClientPlayNetworking.send(Shapeshifter.APPLY_RAGE, PacketByteBufs.empty());
-            if (hunt.consumeClick())        ClientPlayNetworking.send(Shapeshifter.HUNT, PacketByteBufs.empty());
+            boolean listClicked = toggleList.consumeClick();
+            boolean rageClicked = rage.consumeClick();
+            boolean huntClicked = hunt.consumeClick();
+            boolean targetModeClicked = toggleTargetMode.consumeClick();
+            boolean recordClicked = toggleRecording.consumeClick();
 
-            if (toggleTargetMode.consumeClick()) targetModeActive = !targetModeActive;
+            if (client.player == null) return;
 
-            // While recording, auto-stop if the target is 10+ blocks away or unloaded
+            if (!isShapeshifter) {
+                if (isRecording) stopRecording();
+                targetModeActive = false;
+                highlightedTarget = null;
+                return;
+            }
+
+            if (listClicked)  ClientPlayNetworking.send(Shapeshifter.REQUEST_PROFILES, PacketByteBufs.empty());
+            if (rageClicked)  ClientPlayNetworking.send(Shapeshifter.APPLY_RAGE, PacketByteBufs.empty());
+            if (huntClicked)  ClientPlayNetworking.send(Shapeshifter.HUNT, PacketByteBufs.empty());
+            if (targetModeClicked) targetModeActive = !targetModeActive;
+
             if (isRecording && distanceTo(client, recordingTarget) >= 10.0) {
                 stopRecording();
             }
 
-            // Highlight: locked to the recorded target while recording, otherwise follows the crosshair
-            if (isRecording) {
-                highlightedTarget = recordingTarget;
-            } else {
-                highlightedTarget = targetModeActive ? raycastPlayer(client) : null;
-            }
+            highlightedTarget = isRecording
+                    ? recordingTarget
+                    : (targetModeActive ? raycastPlayer(client) : null);
 
-            if (toggleRecording.consumeClick()) {
+            if (recordClicked) {
                 if (isRecording) {
                     stopRecording();
                 } else if (highlightedTarget != null) {
@@ -116,6 +127,19 @@ public class ShapeshifterClient implements ClientModInitializer {
                 client.getSkinManager().registerSkins(profile, (type, location, texture) -> {}, true);
                 ((PlayerInfoAccessor) client.player).shapeshifter$refreshPlayerInfo();
             });
+        });
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            isShapeshifter = false;
+            targetModeActive = false;
+            isRecording = false;
+            recordingTarget = null;
+            highlightedTarget = null;
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.SHAPESHIFTER_STATUS, (client, handler, buf, responseSender) -> {
+            boolean value = buf.readBoolean();
+            client.execute(() -> isShapeshifter = value);
         });
     }
 
@@ -146,5 +170,10 @@ public class ShapeshifterClient implements ClientModInitializer {
         ClientPlayNetworking.send(Shapeshifter.TOGGLE_RECORDING, PacketByteBufs.empty());
         isRecording = false;
         recordingTarget = null;
+    }
+
+    public static boolean isOurKey(KeyMapping key) {
+        return key == toggleTargetMode || key == toggleRecording || key == toggleList
+                || key == rage || key == hunt;
     }
 }

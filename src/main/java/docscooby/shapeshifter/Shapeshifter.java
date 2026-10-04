@@ -5,6 +5,7 @@ import docscooby.shapeshifter.events.ShapeshifterAttackEvent;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -17,6 +18,7 @@ import net.minecraft.world.effect.MobEffects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +37,8 @@ public class Shapeshifter implements ModInitializer {
     public static final ResourceLocation SELECT_TARGET = id("select_target");
     public static final ResourceLocation TOGGLE_RECORDING = id("toggle_recording");
     public static final ResourceLocation PLAY_RECORDING = id("play_recording");
+    public static final ResourceLocation SHAPESHIFTER_STATUS = new ResourceLocation("shapeshifter", "status");
+
 
     @Override
     public void onInitialize() {
@@ -126,6 +130,12 @@ public class Shapeshifter implements ModInitializer {
             });
         });
 
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            ServerPlayer player = handler.getPlayer();
+            syncStatus(player, ((ShapeshifterData) player).shapeshifter$getShapeshifter());
+        });
+
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(Commands.literal("ss")
                     .requires(source -> source.hasPermission(2))
@@ -138,5 +148,11 @@ public class Shapeshifter implements ModInitializer {
 
     public static ResourceLocation id(String path) {
         return new ResourceLocation(MOD_ID, path);
+    }
+
+    public static void syncStatus(ServerPlayer player, boolean value) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
+        buf.writeBoolean(value);
+        ServerPlayNetworking.send(player, SHAPESHIFTER_STATUS, buf);
     }
 }

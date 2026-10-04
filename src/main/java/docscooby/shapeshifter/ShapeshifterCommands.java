@@ -13,6 +13,7 @@ public class ShapeshifterCommands {
 
         ShapeshifterData data = (ShapeshifterData) player;
         boolean result = data.shapeshifter$setShapeshifter();
+        Shapeshifter.syncStatus(player, result);
 
         if (result) {
             player.sendSystemMessage(Component.literal(player.getName().getString() + " set to Shapeshifter"));
