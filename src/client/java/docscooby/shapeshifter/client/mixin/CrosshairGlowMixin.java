@@ -15,7 +15,7 @@ public abstract class CrosshairGlowMixin {
     private void shapeshifter$highlightCrosshairTarget(CallbackInfoReturnable<Boolean> cir) {
         Entity self = (Entity) (Object) this;
         UUID highlighted = ShapeshifterClient.highlightedTarget;
-        if (highlighted != null && self.getUUID().equals(highlighted)) {
+        if (self.getUUID().equals(highlighted)) {
             cir.setReturnValue(true);
         }
     }

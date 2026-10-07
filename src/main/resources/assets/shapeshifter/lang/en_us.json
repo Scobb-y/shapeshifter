@@ -4,5 +4,8 @@
   "key.shapeshifter.rage": "Rage",
   "key.shapeshifter.hunt": "Hunt",
   "key.shapeshifter.target_mode": "Toggle Targeting Mode",
-  "key.shapeshifter.toggle_recording": "Start/Stop Recording Selected"
+  "key.shapeshifter.toggle_recording": "Start/Stop Recording Selected",
+  "key.shapeshifter.play_slot_1": "Play Clip 1",
+  "key.shapeshifter.play_slot_2": "Play Clip 2",
+  "key.shapeshifter.play_slot_3": "Play Clip 3"
 }

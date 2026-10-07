@@ -1,8 +1,8 @@
 package docscooby.shapeshifter.client;
 
 import docscooby.shapeshifter.Shapeshifter;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -24,7 +24,9 @@ public class ShapeshifterListScreen extends Screen {
         super.init();
 
         int y = 40;
-        for (String name : names) {
+        for (int i = 0; i < names.size(); i++) {
+            String name = names.get(i);
+
             addRenderableWidget(Button.builder(Component.literal(name), button -> {
                         FriendlyByteBuf buf = PacketByteBufs.create();
                         buf.writeUtf(name);
@@ -34,13 +36,16 @@ public class ShapeshifterListScreen extends Screen {
                     .bounds(this.width / 2 - 100, y, 200, 20)
                     .build());
 
-            addRenderableWidget(Button.builder(Component.literal("▶"), button -> {
-                        FriendlyByteBuf buf = PacketByteBufs.create();
-                        buf.writeUtf(name);
-                        ClientPlayNetworking.send(Shapeshifter.PLAY_RECORDING, buf);
-                    })
-                    .bounds(this.width / 2 + 105, y, 20, 20)
-                    .build());
+            // Own entry has no recording to play
+            if (i > 0) {
+                addRenderableWidget(Button.builder(Component.literal("▶"), button -> {
+                            FriendlyByteBuf buf = PacketByteBufs.create();
+                            buf.writeUtf(name);
+                            ClientPlayNetworking.send(Shapeshifter.PLAY_RECORDING, buf);
+                        })
+                        .bounds(this.width / 2 + 105, y, 20, 20)
+                        .build());
+            }
             y += 24;
         }
 
@@ -54,8 +59,9 @@ public class ShapeshifterListScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTick);
         graphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
 
-        if (names.isEmpty()) {
-            graphics.drawCenteredString(this.font, Component.literal("No stolen skins yet."), this.width / 2, 50, 0xFFAAAAAA);
+        if (names.size() <= 1) {
+            graphics.drawCenteredString(this.font, Component.literal("No stolen skins yet."),
+                    this.width / 2, 40 + 24 + 6, 0xFFAAAAAA);
         }
     }
 

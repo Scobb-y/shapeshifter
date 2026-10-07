@@ -18,8 +18,12 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +43,9 @@ public class ShapeshifterClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
+        RecordingOverlay.register();
+
         toggleList = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.shapeshifter.toggle", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_CAPS_LOCK, "key.categories.shapeshifter"
@@ -65,8 +72,13 @@ public class ShapeshifterClient implements ClientModInitializer {
         ));
 
         ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.PROFILES_LIST, (client, handler, buf, responseSender) -> {
-            List<String> names = buf.readList(FriendlyByteBuf::readUtf);
-            client.execute(() -> client.setScreen(new ShapeshifterListScreen(names)));
+            List<String> received = buf.readList(FriendlyByteBuf::readUtf); // read the buffer here, on the network thread
+            client.execute(() -> {
+                if (client.player == null) return;
+                List<String> names = new ArrayList<>(received);
+                names.add(0, client.player.getName().getString());
+                client.setScreen(new ShapeshifterListScreen(names));
+            });
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -75,6 +87,7 @@ public class ShapeshifterClient implements ClientModInitializer {
             boolean huntClicked = hunt.consumeClick();
             boolean targetModeClicked = toggleTargetMode.consumeClick();
             boolean recordClicked = toggleRecording.consumeClick();
+            boolean[] slotClicks = RecordingOverlay.consumeKeys();
 
             if (client.player == null) return;
 
@@ -85,10 +98,13 @@ public class ShapeshifterClient implements ClientModInitializer {
                 return;
             }
 
+            RecordingOverlay.sendClicks(slotClicks);
+
             if (listClicked)  ClientPlayNetworking.send(Shapeshifter.REQUEST_PROFILES, PacketByteBufs.empty());
             if (rageClicked)  ClientPlayNetworking.send(Shapeshifter.APPLY_RAGE, PacketByteBufs.empty());
             if (huntClicked)  ClientPlayNetworking.send(Shapeshifter.HUNT, PacketByteBufs.empty());
             if (targetModeClicked) targetModeActive = !targetModeActive;
+
 
             if (isRecording && distanceTo(client, recordingTarget) >= 10.0) {
                 stopRecording();
@@ -105,7 +121,7 @@ public class ShapeshifterClient implements ClientModInitializer {
                     FriendlyByteBuf buf = PacketByteBufs.create();
                     buf.writeUUID(highlightedTarget);
                     ClientPlayNetworking.send(Shapeshifter.SELECT_TARGET, buf);
-                    ClientPlayNetworking.send(Shapeshifter.TOGGLE_RECORDING, PacketByteBufs.empty());
+                    sendRecording(true);
                     recordingTarget = highlightedTarget;
                     isRecording = true;
                 }
@@ -135,11 +151,38 @@ public class ShapeshifterClient implements ClientModInitializer {
             isRecording = false;
             recordingTarget = null;
             highlightedTarget = null;
+            RecordingOverlay.clear();
         });
 
         ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.SHAPESHIFTER_STATUS, (client, handler, buf, responseSender) -> {
             boolean value = buf.readBoolean();
             client.execute(() -> isShapeshifter = value);
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.RECORDING_STATE, (client, handler, buf, responseSender) -> {
+            boolean active = buf.readBoolean();
+            client.execute(() -> {
+                isRecording = active;
+                if (!active) recordingTarget = null;
+            });
+        });
+
+        HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null || mc.options.hideGui) return; // respect F1
+            if (!ShapeshifterClient.isShapeshifter) return;
+
+            int y = 6;
+
+            if (ShapeshifterClient.isRecording) {
+                graphics.fill(6, y, 10, y + 4, 0xFFFF2020);           // red dot
+                graphics.drawString(mc.font, "REC", 14, y - 2, 0xFFFF5555);
+                y += 12;
+            }
+
+            if (ShapeshifterClient.targetModeActive) {
+                graphics.drawString(mc.font, "Target mode", 6, y, 0xFFFFFFFF);
+            }
         });
     }
 
@@ -166,14 +209,20 @@ public class ShapeshifterClient implements ClientModInitializer {
         return client.player.distanceTo(target);
     }
 
+    private static void sendRecording(boolean start) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
+        buf.writeBoolean(start);
+        ClientPlayNetworking.send(Shapeshifter.SET_RECORDING, buf);
+    }
+
     private static void stopRecording() {
-        ClientPlayNetworking.send(Shapeshifter.TOGGLE_RECORDING, PacketByteBufs.empty());
+        sendRecording(false);
         isRecording = false;
         recordingTarget = null;
     }
 
     public static boolean isOurKey(KeyMapping key) {
         return key == toggleTargetMode || key == toggleRecording || key == toggleList
-                || key == rage || key == hunt;
+                || key == rage || key == hunt || RecordingOverlay.isSlotKey(key);
     }
 }
