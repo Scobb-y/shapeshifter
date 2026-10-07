@@ -45,6 +45,7 @@ public class ShapeshifterClient implements ClientModInitializer {
     public void onInitializeClient() {
 
         RecordingOverlay.register();
+        RageOverlay.register();
 
         toggleList = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.shapeshifter.toggle", InputConstants.Type.KEYSYM,

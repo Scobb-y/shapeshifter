@@ -15,21 +15,16 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
 
-import static docscooby.shapeshifter.ShapeshifterDisguiseManager.sendScopedGlow;
-
 public class Shapeshifter implements ModInitializer {
     public static final String MOD_ID = "shapeshifter";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    /** Client uses 10; a little slack here covers latency between client and server positions. */
     private static final double MAX_SELECT_DISTANCE = 12.0;
 
     public static final ResourceLocation SELF_SKIN_UPDATE = id("self_skin_update");
@@ -45,6 +40,7 @@ public class Shapeshifter implements ModInitializer {
     public static final ResourceLocation SHAPESHIFTER_STATUS = id("status");
     public static final ResourceLocation PLAY_DISGUISE_RECORDING = id("play_disguise_recording"); // client -> server (slot)
     public static final ResourceLocation DISGUISE_OVERLAY = id("disguise_overlay");
+    public static final ResourceLocation RAGE_STATE = id("rage_state");
 
     @Override
     public void onInitialize() {
@@ -69,7 +65,6 @@ public class Shapeshifter implements ModInitializer {
                 if (!isShapeshifter(player)) return;
                 ShapeshifterData data = (ShapeshifterData) player;
 
-                // "return to my own skin" entry
                 if (name.equals(player.getGameProfile().getName())) {
                     ShapeshifterDisguiseManager.clearDisguise(player);
                     return;

@@ -1,6 +1,10 @@
 package docscooby.shapeshifter;
 
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -14,14 +18,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ShapeshifterAbilities {
-
-    public static final int RAGE_COOLDOWN_TICKS = 20 * 60 * 5;   // 5 minutes
-    public static final int HUNT_COOLDOWN_TICKS = 20 * 60 * 3;   // 3 minutes
-    public static final int RAGE_DURATION_TICKS = 20 * 30;       // night buffs / daytime immunity length
+    public static final int RAGE_COOLDOWN_TICKS = 20 * 60 * 5;
+    public static final int HUNT_COOLDOWN_TICKS = 20 * 60 * 3;
+    public static final int RAGE_DURATION_TICKS = 20 * 30;
     public static final double HUNT_RANGE = 100.0;
-    public static final float SUN_DAMAGE_MULTIPLIER = 1.5F;      // damage taken in sunlight
+    public static final float SUN_DAMAGE_MULTIPLIER = 1.5F;
 
-    private static final int SUN_CHECK_INTERVAL = 10;            // ticks between daylight checks
+    private static final int SUN_CHECK_INTERVAL = 10;
     private static final int SUN_WEAKNESS_TICKS = 220;
 
     private static final Map<UUID, Long> RAGE_READY_AT = new ConcurrentHashMap<>();
@@ -71,6 +74,7 @@ public final class ShapeshifterAbilities {
         long now = player.server.getTickCount();
         if (isOnCooldown(player, RAGE_READY_AT, "Rage", now)) return;
         RAGE_READY_AT.put(player.getUUID(), now + RAGE_COOLDOWN_TICKS);
+        sendRageState(player, RAGE_DURATION_TICKS);
 
         if (player.serverLevel().isDay()) {
             SUN_IMMUNE_UNTIL.put(player.getUUID(), now + RAGE_DURATION_TICKS);
@@ -80,6 +84,12 @@ public final class ShapeshifterAbilities {
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, RAGE_DURATION_TICKS, 0, false, false, true));
             player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 10, 1, false, false, true));
         }
+    }
+
+    private static void sendRageState(ServerPlayer player, int ticks) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
+        buf.writeVarInt(ticks);
+        ServerPlayNetworking.send(player, Shapeshifter.RAGE_STATE, buf);
     }
 
     public static void hunt(ServerPlayer player) {
@@ -97,6 +107,8 @@ public final class ShapeshifterAbilities {
             float distance = player.distanceTo(other);
             if (distance < HUNT_RANGE) {
                 ShapeshifterDisguiseManager.sendScopedGlow(server, player, other);
+                other.sendSystemMessage(Component.literal("You feel as though you are being watched... hunted...")
+                        .withStyle(ChatFormatting.RED));
                 foundInRange = true;
             }
             if (distance < closestDistance) {
@@ -116,6 +128,8 @@ public final class ShapeshifterAbilities {
         }
 
         HUNT_READY_AT.put(player.getUUID(), now + HUNT_COOLDOWN_TICKS);
+        closest.sendSystemMessage(Component.literal("A terrible chill goes up your spine...")
+                .withStyle(ChatFormatting.YELLOW));
         BlockPos pos = closest.blockPosition();
         player.sendSystemMessage(Component.literal(String.format(
                 "Nearest player: %s at %d, %d, %d (%d blocks away)",
