@@ -6,13 +6,11 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.resources.sounds.AbstractSoundInstance;
-import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 
 public final class RageOverlay {
+
     private static final float MAX_ALPHA = 0.55F;
     private static final int FADE_IN_TICKS = 10;
     private static final int FADE_OUT_TICKS = 40;
@@ -26,7 +24,9 @@ public final class RageOverlay {
 
     public static void register() {
         ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.RAGE_STATE, (client, handler, buf, responseSender) -> {
+
             int ticks = buf.readVarInt();
+
             client.execute(() -> {
                 if (client.level == null) return;
                 totalTicks = ticks;
@@ -73,26 +73,5 @@ public final class RageOverlay {
 
     private static int argb(float alpha) {
         return ((int) (Mth.clamp(alpha, 0.0F, 1.0F) * 255.0F) << 24) | RED;
-    }
-
-    private static final SoundEvent RAGE_MUSIC =
-            SoundEvent.createVariableRangeEvent(Shapeshifter.id("rage_music"));
-    private static SoundInstance musicInstance;
-
-    private static class LoopingSound extends AbstractSoundInstance {
-        LoopingSound(SoundEvent event, float volume) {
-            super(event, SoundSource.MASTER, SoundInstance.createUnseededRandom());
-            this.looping = true;
-            this.volume = volume;
-            this.attenuation = SoundInstance.Attenuation.NONE;
-            this.relative = true;
-        }
-    }
-
-    private static void stopMusic(Minecraft client) {
-        if (musicInstance != null) {
-            client.getSoundManager().stop(musicInstance);
-            musicInstance = null;
-        }
     }
 }

@@ -1,0 +1,7 @@
+{
+  "breathing": {
+    "sounds": [
+      { "name": "shapeshifter:breathing", "stream": true }
+    ]
+  }
+}

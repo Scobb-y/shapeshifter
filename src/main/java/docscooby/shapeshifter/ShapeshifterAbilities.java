@@ -4,9 +4,13 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSoundEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundStopSoundPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -43,6 +47,48 @@ public final class ShapeshifterAbilities {
 
     public static final int GLOW_DURATION_TICKS = 20 * 30;
 
+    private static final SoundEvent BREATH_SOUND = SoundEvent.createVariableRangeEvent(Shapeshifter.id("breathing"));
+    private static final int BREATH_LENGTH_TICKS = 20 * 9;
+    private static final float BREATH_VOLUME = 1.5F;
+    private static final double BREATH_RADIUS = 16 * BREATH_VOLUME + 8;
+
+    private static final class Breathing {
+        final long end;
+        long next;
+
+        Breathing(long start, long end) {
+            this.next = start;
+            this.end = end;
+        }
+    }
+
+    private static final Map<UUID, Breathing> BREATHERS = new ConcurrentHashMap<>();
+
+    private static void tickBreathing(MinecraftServer server, long now) {
+        Iterator<Map.Entry<UUID, Breathing>> it = BREATHERS.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<UUID, Breathing> entry = it.next();
+            Breathing breathing = entry.getValue();
+            ServerPlayer breather = server.getPlayerList().getPlayer(entry.getKey());
+
+            if (breather == null || !breather.isAlive() || now >= breathing.end) {
+                it.remove();
+                server.getPlayerList().broadcastAll(
+                        new ClientboundStopSoundPacket(BREATH_SOUND.getLocation(), SoundSource.PLAYERS));
+                continue;
+            }
+
+            if (now >= breathing.next) {
+                breathing.next = now + BREATH_LENGTH_TICKS;
+                server.getPlayerList().broadcast(null,
+                        breather.getX(), breather.getY(), breather.getZ(), BREATH_RADIUS,
+                        breather.serverLevel().dimension(),
+                        new ClientboundSoundEntityPacket(Holder.direct(BREATH_SOUND), SoundSource.PLAYERS,
+                                breather, BREATH_VOLUME, 1.0F, breather.getRandom().nextLong()));
+            }
+        }
+    }
+
     private static final class Heartbeat {
         final UUID hunter;
         final long end;
@@ -62,6 +108,7 @@ public final class ShapeshifterAbilities {
     public static void tick(MinecraftServer server) {
         long now = server.getTickCount();
         tickHeartbeats(server, now);
+        tickBreathing(server, now);
         if (now % SUN_CHECK_INTERVAL != 0) return;
 
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -76,6 +123,7 @@ public final class ShapeshifterAbilities {
     public static void forget(UUID player) {
         SUN_VULNERABLE.remove(player);
         HEARTBEATS.remove(player);
+        BREATHERS.remove(player);
     }
 
     private static boolean isSunlit(ServerPlayer player) {
@@ -101,6 +149,7 @@ public final class ShapeshifterAbilities {
         long now = player.server.getTickCount();
         if (isOnCooldown(player, RAGE_READY_AT, "Rage", now)) return;
         RAGE_READY_AT.put(player.getUUID(), now + RAGE_COOLDOWN_TICKS);
+        BREATHERS.put(player.getUUID(), new Breathing(now, now + RAGE_DURATION_TICKS));
         sendRageState(player, RAGE_DURATION_TICKS);
 
         if (player.serverLevel().isDay()) {
