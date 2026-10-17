@@ -3,12 +3,10 @@ package docscooby.shapeshifter;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.datafixers.util.Pair;
-import docscooby.shapeshifter.mixin.EntitySharedFlagsAccessor;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.*;
-import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,11 +20,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class ShapeshifterDisguiseManager {
-
-    private static final int FLAG_GLOWING = 6;
 
     public record DisguiseInfo(UUID id, String name) {}
 
@@ -119,22 +114,5 @@ public class ShapeshifterDisguiseManager {
         if (hasSignature) buf.writeUtf(texture.getSignature());
 
         ServerPlayNetworking.send(target, Shapeshifter.SELF_SKIN_UPDATE, buf);
-    }
-
-    public static void sendScopedGlow(MinecraftServer server, ServerPlayer viewer, ServerPlayer target) {
-        EntityDataAccessor<Byte> flagsAccessor = EntitySharedFlagsAccessor.getDataSharedFlagsId();
-        byte currentFlags = target.getEntityData().get(flagsAccessor);
-        byte glowingFlags = (byte) (currentFlags | (1 << FLAG_GLOWING));
-
-        viewer.connection.send(new ClientboundSetEntityDataPacket(
-                target.getId(), List.of(SynchedEntityData.DataValue.create(flagsAccessor, glowingFlags))
-        ));
-
-        SCHEDULER.schedule(() -> server.execute(() -> {
-            byte realFlags = target.getEntityData().get(flagsAccessor);
-            viewer.connection.send(new ClientboundSetEntityDataPacket(
-                    target.getId(), List.of(SynchedEntityData.DataValue.create(flagsAccessor, realFlags))
-            ));
-        }), 30, TimeUnit.SECONDS);
     }
 }

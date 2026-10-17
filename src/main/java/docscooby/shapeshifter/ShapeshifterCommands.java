@@ -26,7 +26,7 @@ public class ShapeshifterCommands {
         String name = target.getGameProfile().getName();
         String adminMessage = name + (newValue ? " is now a Shapeshifter" : " is no longer a Shapeshifter");
 
-        context.getSource().sendSuccess(() -> Component.literal(adminMessage), true);
+        context.getSource().sendSuccess(() -> Component.literal(adminMessage), false);
 
         if (context.getSource().getEntity() != target) {
             target.sendSystemMessage(Component.literal(

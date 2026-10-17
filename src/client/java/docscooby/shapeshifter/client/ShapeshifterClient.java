@@ -19,13 +19,13 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ShapeshifterClient implements ClientModInitializer {
 
@@ -35,6 +35,7 @@ public class ShapeshifterClient implements ClientModInitializer {
     public static UUID highlightedTarget = null;
     public static UUID recordingTarget = null;
 
+    private static final Map<UUID, Long> GLOW_UNTIL = new ConcurrentHashMap<>();
     private static KeyMapping toggleTargetMode;
     private static KeyMapping toggleRecording;
     private static KeyMapping toggleList;
@@ -153,6 +154,7 @@ public class ShapeshifterClient implements ClientModInitializer {
             recordingTarget = null;
             highlightedTarget = null;
             RecordingOverlay.clear();
+            GLOW_UNTIL.clear();
         });
 
         ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.SHAPESHIFTER_STATUS, (client, handler, buf, responseSender) -> {
@@ -165,6 +167,15 @@ public class ShapeshifterClient implements ClientModInitializer {
             client.execute(() -> {
                 isRecording = active;
                 if (!active) recordingTarget = null;
+            });
+        });
+
+        ClientPlayNetworking.registerGlobalReceiver(Shapeshifter.GLOW_PLAYERS, (client, handler, buf, responseSender) -> {
+            int durationTicks = buf.readVarInt();
+            List<UUID> ids = buf.readList(FriendlyByteBuf::readUUID);
+            client.execute(() -> {
+                long until = System.currentTimeMillis() + durationTicks * 50L;
+                for (UUID id : ids) GLOW_UNTIL.put(id, until);
             });
         });
 
@@ -225,5 +236,15 @@ public class ShapeshifterClient implements ClientModInitializer {
     public static boolean isOurKey(KeyMapping key) {
         return key == toggleTargetMode || key == toggleRecording || key == toggleList
                 || key == rage || key == hunt || RecordingOverlay.isSlotKey(key);
+    }
+
+    public static boolean isGlowing(UUID id) {
+        Long until = GLOW_UNTIL.get(id);
+        if (until == null) return false;
+        if (System.currentTimeMillis() >= until) {
+            GLOW_UNTIL.remove(id);
+            return false;
+        }
+        return isShapeshifter;
     }
 }

@@ -38,7 +38,6 @@ public abstract class PlayerGameProfileMixin implements GameProfileAccessor, Sha
     @Unique
     private UUID shapeshifter$selectedTarget;
 
-    // ---- Persistence ----
 
     @Inject(method = "addAdditionalSaveData", at = @At("TAIL"))
     private void shapeshifter$save(CompoundTag tag, CallbackInfo ci) {

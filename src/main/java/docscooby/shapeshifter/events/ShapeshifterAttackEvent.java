@@ -16,7 +16,6 @@ public class ShapeshifterAttackEvent {
 
                 ShapeshifterData attackerData = (ShapeshifterData) attacker;
                 if (attackerData.shapeshifter$getShapeshifter()) {
-                    // If the victim is currently disguised, steal their real skin, not the one they're wearing
                     GameProfile profile = ((GameProfileAccessor) target).shapeshifter$getOriginalGameProfile();
                     if (profile == null) profile = target.getGameProfile();
 

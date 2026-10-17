@@ -21,7 +21,8 @@ public abstract class PlayerManagerMixin {
             String key = contents.getKey();
             if (key.equals("multiplayer.player.joined")
                     || key.equals("multiplayer.player.joined.renamed")
-                    || key.equals("multiplayer.player.left")) {
+                    || key.equals("multiplayer.player.left")
+                    || key.startsWith("death.")) {
                 ci.cancel();
             }
         }

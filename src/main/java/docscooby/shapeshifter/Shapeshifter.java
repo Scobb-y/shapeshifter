@@ -41,6 +41,7 @@ public class Shapeshifter implements ModInitializer {
     public static final ResourceLocation PLAY_DISGUISE_RECORDING = id("play_disguise_recording"); // client -> server (slot)
     public static final ResourceLocation DISGUISE_OVERLAY = id("disguise_overlay");
     public static final ResourceLocation RAGE_STATE = id("rage_state");
+    public static final ResourceLocation GLOW_PLAYERS = id("glow_players");
 
     @Override
     public void onInitialize() {

@@ -3,7 +3,6 @@
   "package": "docscooby.shapeshifter.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "EntitySharedFlagsAccessor",
     "LivingEntityDamageMixin",
     "PlayerGameProfileMixin",
     "PlayerManagerMixin"

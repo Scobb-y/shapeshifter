@@ -12,10 +12,9 @@ import java.util.UUID;
 @Mixin(Entity.class)
 public abstract class CrosshairGlowMixin {
     @Inject(method = "isCurrentlyGlowing", at = @At("HEAD"), cancellable = true)
-    private void shapeshifter$highlightCrosshairTarget(CallbackInfoReturnable<Boolean> cir) {
-        Entity self = (Entity) (Object) this;
-        UUID highlighted = ShapeshifterClient.highlightedTarget;
-        if (self.getUUID().equals(highlighted)) {
+    private void shapeshifter$highlight(CallbackInfoReturnable<Boolean> cir) {
+        UUID id = ((Entity) (Object) this).getUUID();
+        if (id.equals(ShapeshifterClient.highlightedTarget) || ShapeshifterClient.isGlowing(id)) {
             cir.setReturnValue(true);
         }
     }
